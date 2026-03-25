@@ -1,0 +1,41 @@
+spring:
+  application:
+    name: demo
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/ivygate
+    username: handsomedan
+    password: donotshiptoprod
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+    baseline-version: 0
+
+  jpa:
+    hibernate:
+      ddl-auto: none
+
+  spring:
+    security:
+        oauth2:
+            client:
+                registration:
+                    cognito:
+                        client-id: <client id>
+                        client-secret: <client secret>
+                        scope:
+                        - phone
+                        - openid
+                        - email
+                        # Spring Security by default uses a redirect-uri in the format: {baseUrl}/login/oauth2/code/{registrationId}
+                        # For example: http://localhost:8080/login/oauth2/code/cognito
+                        # See more: https://docs.spring.io/spring-security/reference/servlet/oauth2/login/core.html#oauth2login-sample-redirect-uri
+                        redirect-uri: http://localhost:8080/login/oauth2/code/cognito
+                provider:
+                    cognito:
+                        issuerUri: TODO
+                        jwk-set-uri: TODO
+                        
+                        user-name-attribute: username
