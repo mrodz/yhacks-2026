@@ -3,6 +3,7 @@ package ivygate.demo.controller;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.logout.SimpleUrlLogoutSuccessHandler;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -19,7 +20,8 @@ public class CognitoLogoutHandler extends SimpleUrlLogoutSuccessHandler {
     /**
      * The domain of your user pool.
      */
-    private final String domain = "<TODO>";
+    @Value("${aws.cognito.user-pool-uri}")
+    private String domain;
 
     /**
      * An allowed callback URL.

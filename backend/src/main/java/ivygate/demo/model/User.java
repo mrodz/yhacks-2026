@@ -1,5 +1,7 @@
 package ivygate.demo.model;
 
+import java.util.UUID;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -36,9 +38,15 @@ public class User {
     @Column(nullable = true)
     private String personalEmail;
 
+    @Column(unique = true)
+    private UUID sub;
+
+    private String preferredUsername;
+    private String website;
+    private String phoneNumber;
+    private String nickname;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "school_id")
     private School school;
-
-    
 }

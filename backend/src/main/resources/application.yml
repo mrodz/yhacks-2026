@@ -1,4 +1,15 @@
+aws:
+  profile: ivygatedev
+  cognito:
+    user-pool-id: ${COGNITO_USER_POOL_ID}
+    client-id: ${COGNITO_CLIENT_ID}
+    client-secret: ${COGNITO_CLIENT_SECRET}
+    user-pool-uri: ${COGNITO_USER_POOL_URI}
+
 spring:
+  config:
+    import: optional:file:.env[.properties]
+
   application:
     name: demo
 
@@ -17,25 +28,22 @@ spring:
     hibernate:
       ddl-auto: none
 
-  spring:
-    security:
-        oauth2:
-            client:
-                registration:
-                    cognito:
-                        client-id: <client id>
-                        client-secret: <client secret>
-                        scope:
-                        - phone
-                        - openid
-                        - email
-                        # Spring Security by default uses a redirect-uri in the format: {baseUrl}/login/oauth2/code/{registrationId}
-                        # For example: http://localhost:8080/login/oauth2/code/cognito
-                        # See more: https://docs.spring.io/spring-security/reference/servlet/oauth2/login/core.html#oauth2login-sample-redirect-uri
-                        redirect-uri: http://localhost:8080/login/oauth2/code/cognito
-                provider:
-                    cognito:
-                        issuerUri: TODO
-                        jwk-set-uri: TODO
-                        
-                        user-name-attribute: username
+  security:
+    oauth2:
+      client:
+        registration:
+          cognito:
+            client-id: ${COGNITO_CLIENT_ID}
+            client-secret: ${COGNITO_CLIENT_SECRET}
+            scope:
+              - phone
+              - openid
+              - email
+            # Spring Security by default uses a redirect-uri in the format: {baseUrl}/login/oauth2/code/{registrationId}
+            # For example: http://localhost:8080/login/oauth2/code/cognito
+            # See more: https://docs.spring.io/spring-security/reference/servlet/oauth2/login/core.html#oauth2login-sample-redirect-uri
+            redirect-uri: http://localhost:8080/login/oauth2/code/cognito
+        provider:
+          cognito:
+            issuer-uri: ${COGNITO_ISSUER_URI}
+            jwk-set-uri: ${COGNITO_JWK_SET_URI}

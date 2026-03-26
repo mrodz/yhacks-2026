@@ -4,22 +4,25 @@ import java.net.URI;
 import java.time.Instant;
 import java.util.stream.Collectors;
 
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     @Override
-    protected org.springframework.http.ResponseEntity<Object> handleMethodArgumentNotValid(
+    protected ResponseEntity<Object> handleMethodArgumentNotValid(
             MethodArgumentNotValidException ex, 
-            org.springframework.http.HttpHeaders headers, 
-            org.springframework.http.HttpStatusCode status, 
-            org.springframework.web.context.request.WebRequest request) {
+            HttpHeaders headers, 
+            HttpStatusCode status, 
+            WebRequest request) {
 
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, "Validation failed");
         problemDetail.setTitle("Invalid Request Parameters");
@@ -57,13 +60,22 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return problemDetail;
     }
 
+    @ExceptionHandler(InvalidVerificationCodeException.class)
+    public ProblemDetail handleInvalidVerificationCodeException(InvalidVerificationCodeException ex) {
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, ex.getMessage());
+        problemDetail.setTitle("Invalid verification code");
+        return problemDetail;
+    }
+
     @ExceptionHandler(Exception.class)
     public ProblemDetail handleSecurityException(Exception ex) {
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
                 HttpStatus.INTERNAL_SERVER_ERROR, 
                 "An unexpected error occurred on our end.");
         problemDetail.setTitle("Internal Server Error");
-        
+
+        ex.printStackTrace(System.err);
+
         // Note: Don't expose stack traces in production!
         return problemDetail;
     }

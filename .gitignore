@@ -44,3 +44,5 @@ logs/
 
 # Node.js dependencies (if using a frontend in the same repo)
 node_modules/
+
+.env

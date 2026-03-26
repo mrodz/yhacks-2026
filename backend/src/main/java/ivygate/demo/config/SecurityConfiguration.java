@@ -2,6 +2,7 @@ package ivygate.demo.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -23,11 +24,11 @@ public class SecurityConfiguration {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         CognitoLogoutHandler cognitoLogoutHandler = new CognitoLogoutHandler();
 
-        http.csrf(Customizer.withDefaults())
+        http.csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(authz -> authz
-                .requestMatchers("/").permitAll()
-                        .anyRequest()
-                        .authenticated())
+                        .requestMatchers("/").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/users", "/users/confirm").permitAll()
+                        .anyRequest().authenticated())
                 .oauth2Login(Customizer.withDefaults())
                 .logout(logout -> logout.logoutSuccessHandler(cognitoLogoutHandler));
         return http.build();

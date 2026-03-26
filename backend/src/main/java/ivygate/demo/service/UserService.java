@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.springframework.stereotype.Service;
 
+import ivygate.demo.dto.ConfirmUserRequest;
 import ivygate.demo.dto.CreateUserRequest;
 import ivygate.demo.dto.UpdateUserRequest;
 import ivygate.demo.dto.UserResponse;
@@ -22,25 +23,42 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final SchoolRepository schoolRepository;
+    private final CognitoService cognitoService;
 
-    public UserResponse createUser(CreateUserRequest request) {
+    /**
+     * Validates the school domain and initiates Cognito sign-up.
+     * Cognito sends a 6-digit code to the user's email from no-reply@verificationemail.com.
+     */
+    public void initiateRegistration(CreateUserRequest request) {
         if (userRepository.existsByEmail(request.email()) || request.personalEmail().map(userRepository::existsByPersonalEmail).orElse(false)) {
             throw new DuplicateUserException();
         }
 
         var emailDomain = request.email().substring(request.email().indexOf("@") + 1);
+        schoolRepository.findByEmailDomain(emailDomain)
+                .orElseThrow(() -> new SchoolNotFoundException(request.email()));
 
+        cognitoService.signUp(request.email(), request.name(), request.password());
+    }
+
+    /**
+     * Confirms the verification code with Cognito and saves the user to the database.
+     */
+    public UserResponse confirmRegistration(ConfirmUserRequest request) {
+        var signupResult = cognitoService.confirmSignUp(request.email(), request.code());
+
+        var emailDomain = request.email().substring(request.email().indexOf("@") + 1);
         School school = schoolRepository.findByEmailDomain(emailDomain)
                 .orElseThrow(() -> new SchoolNotFoundException(request.email()));
 
         User user = User.builder()
-                .name(request.name())
                 .email(request.email())
+                .sub(signupResult.sub())
+                .name(signupResult.name())
                 .school(school)
                 .build();
 
-        User saved = userRepository.save(user);
-        return toResponse(saved);
+        return toResponse(userRepository.save(user));
     }
 
     public List<UserResponse> getAllUsers() {

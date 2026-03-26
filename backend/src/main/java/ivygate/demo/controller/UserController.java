@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import ivygate.demo.dto.ConfirmUserRequest;
 import ivygate.demo.dto.CreateUserRequest;
 import ivygate.demo.dto.UpdateUserRequest;
 import ivygate.demo.dto.UserResponse;
@@ -28,9 +29,15 @@ public class UserController {
     private final UserService userService;
 
     @PostMapping
+    @ResponseStatus(HttpStatus.ACCEPTED)
+    public void initiateRegistration(@Valid @RequestBody CreateUserRequest request) {
+        userService.initiateRegistration(request);
+    }
+
+    @PostMapping("/confirm")
     @ResponseStatus(HttpStatus.CREATED)
-    public UserResponse createUser(@Valid @RequestBody CreateUserRequest request) {
-        return userService.createUser(request);
+    public UserResponse confirmRegistration(@Valid @RequestBody ConfirmUserRequest request) {
+        return userService.confirmRegistration(request);
     }
 
     @GetMapping
