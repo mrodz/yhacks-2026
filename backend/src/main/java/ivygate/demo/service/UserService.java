@@ -1,6 +1,7 @@
 package ivygate.demo.service;
 
 import java.util.List;
+import java.util.UUID;
 
 import org.springframework.stereotype.Service;
 
@@ -38,7 +39,8 @@ public class UserService {
         schoolRepository.findByEmailDomain(emailDomain)
                 .orElseThrow(() -> new SchoolNotFoundException(request.email()));
 
-        cognitoService.signUp(request.email(), request.name(), request.password());
+        cognitoService.signUp(request.email(), request.name(), request.password(),
+                request.nickname().orElseGet(request::name), request.phoneNumber(), request.preferredUsername().orElseGet(request::name), "/profile");
     }
 
     /**
@@ -98,6 +100,12 @@ public class UserService {
 
         User updated = userRepository.save(user);
         return toResponse(updated);
+    }
+
+    public UserResponse getCurrentUser(UUID sub) {
+        User user = userRepository.findBySub(sub)
+                .orElseThrow(() -> new EntityNotFoundException("User not found"));
+        return toResponse(user);
     }
 
     public void deleteUser(Long id) {

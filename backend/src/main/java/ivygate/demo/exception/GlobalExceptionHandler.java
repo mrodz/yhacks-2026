@@ -49,14 +49,14 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     public ProblemDetail handleSchoolNotFoundException(SchoolNotFoundException ex) {
         ProblemDetail problemDetail = ProblemDetail.forStatus(HttpStatus.BAD_REQUEST);
         problemDetail.setDetail(ex.getMessage());
-        problemDetail.setTitle("Cannot sign up for ivygate");
+        problemDetail.setTitle("Cannot sign up for app");
         return problemDetail;
     }
 
     @ExceptionHandler(DuplicateUserException.class)
     public ProblemDetail handleDuplicateUserException(DuplicateUserException ex) {
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, "Duplicate user");
-        problemDetail.setTitle("Cannot sign up for ivygate");
+        problemDetail.setTitle("Cannot sign up for app");
         return problemDetail;
     }
 
@@ -64,6 +64,27 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     public ProblemDetail handleInvalidVerificationCodeException(InvalidVerificationCodeException ex) {
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, ex.getMessage());
         problemDetail.setTitle("Invalid verification code");
+        return problemDetail;
+    }
+
+    @ExceptionHandler(AuthenticationFailedException.class)
+    public ProblemDetail handleAuthenticationFailedException(AuthenticationFailedException ex) {
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.UNAUTHORIZED, "Incorrect email or password.");
+        problemDetail.setTitle("Authentication failed");
+        return problemDetail;
+    }
+
+    @ExceptionHandler(PasswordException.class)
+    public ProblemDetail handlePasswordException(PasswordException ex) {
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.UNAUTHORIZED, ex.getMessage());
+        problemDetail.setTitle("Password policy violation");
+        return problemDetail;
+    }
+
+    @ExceptionHandler(UserSignUpException.class)
+    public ProblemDetail handlePasswordException(UserSignUpException ex) {
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.UNAUTHORIZED, ex.getMessage());
+        problemDetail.setTitle("Cannot create user");
         return problemDetail;
     }
 

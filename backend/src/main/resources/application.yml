@@ -47,3 +47,6 @@ spring:
           cognito:
             issuer-uri: ${COGNITO_ISSUER_URI}
             jwk-set-uri: ${COGNITO_JWK_SET_URI}
+      resourceserver:
+        jwt:
+          jwk-set-uri: ${COGNITO_JWK_SET_URI}

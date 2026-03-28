@@ -1,8 +1,11 @@
 package ivygate.demo.controller;
 
 import java.util.List;
+import java.util.UUID;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -38,6 +41,12 @@ public class UserController {
     @ResponseStatus(HttpStatus.CREATED)
     public UserResponse confirmRegistration(@Valid @RequestBody ConfirmUserRequest request) {
         return userService.confirmRegistration(request);
+    }
+
+    @GetMapping("/me")
+    public UserResponse getCurrentUser(@AuthenticationPrincipal Jwt jwt) {
+        UUID sub = UUID.fromString(jwt.getSubject());
+        return userService.getCurrentUser(sub);
     }
 
     @GetMapping
