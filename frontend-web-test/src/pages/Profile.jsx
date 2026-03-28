@@ -70,7 +70,7 @@ export default function Profile() {
   return (
     <div className="page">
       <div className="card">
-        <div className="logo" style={{ marginBottom: '1.5rem' }}>App Name</div>
+        <div className="logo" style={{ marginBottom: '1.5rem' }}>FormFriend</div>
 
         <div className="profile-header">
           <div className="avatar">{initials}</div>

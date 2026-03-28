@@ -39,7 +39,7 @@ export default function Login() {
   return (
     <div className="page">
       <div className="card">
-        <div className="logo">App Name</div>
+        <div className="logo">FormFriend</div>
         <div className="subtitle">Sign in to your account</div>
 
         {justRegistered && <div className="alert alert-success">Account created! Sign in to continue.</div>}
@@ -47,10 +47,10 @@ export default function Login() {
 
         <form onSubmit={handleSubmit}>
           <div className="form-group">
-            <label>University email</label>
+            <label>Email</label>
             <input
               type="email"
-              placeholder="jsmith@university.edu"
+              placeholder="jsmith@email.edu"
               value={email}
               onChange={e => setEmail(e.target.value)}
               required

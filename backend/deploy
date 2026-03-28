@@ -3,7 +3,7 @@
 set -e
 
 # --- Config ---
-SERVER="ec2-user@ec2-44-222-212-226.compute-1.amazonaws.com"
+SERVER="ec2-user@api.formfriend.xyz"
 SSH_KEY="~/.ssh/yhacks-2026-backend.pem"  # override with: export SSH_KEY=/path/to/key.pem
 REMOTE_DIR="/home/ec2-user/"
 JAR_NAME="app.jar"
@@ -25,6 +25,13 @@ echo ">>> Copying jar to server..."
 ssh -i "$SSH_KEY" "$SERVER" "mkdir -p $REMOTE_DIR"
 scp -i "$SSH_KEY" "$JAR_PATH" "$SERVER:$REMOTE_DIR/$JAR_NAME"
 
+if [ -f ".env" ]; then
+  echo ">>> Copying .env to server..."
+  scp -i "$SSH_KEY" .env "$SERVER:$REMOTE_DIR/.env"
+else
+  echo "WARNING: No .env file found in current directory, skipping."
+fi
+
 # --- Restart ---
 echo ">>> Restarting app on server..."
 ssh -i "$SSH_KEY" "$SERVER" bash <<EOF
@@ -40,7 +47,7 @@ ssh -i "$SSH_KEY" "$SERVER" bash <<EOF
 
   # Start new jar
   echo "Starting new jar..."
-  nohup java -jar $REMOTE_DIR/$JAR_NAME > $REMOTE_DIR/app.log 2>&1 &
+  nohup java -jar $REMOTE_DIR/$JAR_NAME --spring.config.import=optional:file:$REMOTE_DIR/.env > $REMOTE_DIR/app.log 2>&1 &
   echo "App started with PID \$!"
 EOF
 

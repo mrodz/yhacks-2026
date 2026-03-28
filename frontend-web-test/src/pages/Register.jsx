@@ -87,7 +87,7 @@ export default function Register() {
   return (
     <div className="page">
       <div className="card">
-        <div className="logo">App Name</div>
+        <div className="logo">FormFriend</div>
         <div className="subtitle">Create your account</div>
 
         <div className="step-indicator">
@@ -114,7 +114,7 @@ export default function Register() {
               <label>Email</label>
               <input
                 type="email"
-                placeholder="jsmith@university.edu"
+                placeholder="jsmith@email.edu"
                 value={email}
                 onChange={e => setEmail(e.target.value)}
                 required
