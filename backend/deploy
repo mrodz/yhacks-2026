@@ -1,0 +1,47 @@
+#!/bin/bash
+
+set -e
+
+# --- Config ---
+SERVER="ec2-user@ec2-44-222-212-226.compute-1.amazonaws.com"
+SSH_KEY="~/.ssh/yhacks-2026-backend.pem"  # override with: export SSH_KEY=/path/to/key.pem
+REMOTE_DIR="/home/ec2-user/"
+JAR_NAME="app.jar"
+
+# --- Build ---
+echo ">>> Building Spring Boot app..."
+./gradlew clean bootJar
+
+# Find the built jar
+JAR_PATH=$(find build/libs -name "*.jar" ! -name "*plain*" | head -1)
+if [ -z "$JAR_PATH" ]; then
+  echo "ERROR: No jar found in build/libs"
+  exit 1
+fi
+echo ">>> Built: $JAR_PATH"
+
+# --- Transfer ---
+echo ">>> Copying jar to server..."
+ssh -i "$SSH_KEY" "$SERVER" "mkdir -p $REMOTE_DIR"
+scp -i "$SSH_KEY" "$JAR_PATH" "$SERVER:$REMOTE_DIR/$JAR_NAME"
+
+# --- Restart ---
+echo ">>> Restarting app on server..."
+ssh -i "$SSH_KEY" "$SERVER" bash <<EOF
+  # Stop existing jar
+  PID=\$(pgrep -f "$JAR_NAME" || true)
+  if [ -n "\$PID" ]; then
+    echo "Stopping PID \$PID..."
+    kill \$PID
+    sleep 3
+  else
+    echo "No existing process found."
+  fi
+
+  # Start new jar
+  echo "Starting new jar..."
+  nohup java -jar $REMOTE_DIR/$JAR_NAME > $REMOTE_DIR/app.log 2>&1 &
+  echo "App started with PID \$!"
+EOF
+
+echo ">>> Deployment complete!"
