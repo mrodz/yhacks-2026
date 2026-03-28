@@ -1,48 +1,16 @@
-# Generic Java
-*.class
+# v0 sandbox internal files
+__v0_runtime_loader.js
+__v0_devtools.tsx
+__v0_jsx-dev-runtime.ts
+.snowflake/
+.v0-trash/
+.vercel/
+next.user-config.*
 
-# Maven
-target/
-pom.xml.tag
-pom.xml.next
-pom.xml.bak
-release.properties
+# Environment variables
+.env*.local
 
-# Gradle
-build/
-.gradle/
-# Gradle cache
-.gradletasknamecache
-
-# IDE-specific files and directories
-.idea/             # IntelliJ IDEA
-.sts4-cache/       # Spring Tools Suite (STS) 4
-.eclipse/          # Eclipse
-.project
-.classpath
-.settings/
-.vscode/           # VS Code
-*.iml              # IntelliJ project files
-
-# Operating System files
-.DS_Store          # macOS
-Thumbs.db          # Windows
-
-# Logs and temporary files
-logs/
-*.log
-*.lock
-*.tmp
-*.swap
-
-# Environment and sensitive files
-.env               # Environment variable files
-*.properties.local # Local configuration files
-# Never commit files containing secrets like database credentials
-# application.properties (consider using environment variables for sensitive info)
-# application.yml (consider using environment variables for sensitive info)
-
-# Node.js dependencies (if using a frontend in the same repo)
-node_modules/
-
-.env
+# Common ignores
+node_modules
+.next/
+.DS_Store
