@@ -1,8 +1,9 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import { authHeaders, getToken } from '../auth'
 import { useLang } from '../LangContext'
 import AnalysisPanel from '../components/AnalysisPanel'
+import Header from '../components/Header'
 
 const BACKEND = 'https://api.formfriend.xyz'
 
@@ -65,9 +66,14 @@ export default function ContractUpload() {
   }
 
   return (
-    <div className="page" style={{ justifyContent: 'flex-start', paddingTop: '3rem' }}>
+    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: 'var(--gray-50)' }}>
+      <Header>
+        <Link to="/contracts" className="btn btn-secondary" style={{ width: 'auto', padding: '0.5rem 1rem', fontSize: '0.875rem' }}>
+          {t('my_documents')}
+        </Link>
+      </Header>
+    <div className="page" style={{ flex: 1, justifyContent: 'flex-start', paddingTop: '3rem' }}>
       <div className="card" style={{ maxWidth: '640px' }}>
-        <div className="logo" style={{ marginBottom: '1.5rem' }}>FormFriend</div>
         <h2>{t('parse_contract')}</h2>
 
         <form onSubmit={handleSubmit}>
@@ -151,6 +157,7 @@ export default function ContractUpload() {
           </div>
         )}
       </div>
+    </div>
     </div>
   )
 }

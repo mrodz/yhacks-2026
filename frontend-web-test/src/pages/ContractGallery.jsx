@@ -4,6 +4,7 @@ import { authHeaders, getToken } from '../auth'
 import { useLang } from '../LangContext'
 import AnalysisPanel from '../components/AnalysisPanel'
 import PdfViewer from '../components/PdfViewer'
+import Header from '../components/Header'
 
 const BACKEND = 'https://api.formfriend.xyz'
 
@@ -224,18 +225,16 @@ export default function ContractGallery() {
   )
 
   return (
-    <div className="page" style={{ justifyContent: 'flex-start', paddingTop: '3rem', alignItems: 'stretch', maxWidth: '1100px', margin: '0 auto' }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem', padding: '0 1rem' }}>
-        <div style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--blue)' }}>FormFriend</div>
-        <div style={{ display: 'flex', gap: '0.75rem' }}>
-          <Link to="/contracts/upload" className="btn btn-primary" style={{ width: 'auto', padding: '0.5rem 1rem', fontSize: '0.875rem' }}>
-            {t('upload_pdf')}
-          </Link>
-          <Link to="/profile" className="btn btn-secondary" style={{ width: 'auto', padding: '0.5rem 1rem', fontSize: '0.875rem' }}>
-            {t('profile')}
-          </Link>
-        </div>
-      </div>
+    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: 'var(--gray-50)' }}>
+      <Header>
+        <Link to="/contracts/upload" className="btn btn-primary" style={{ width: 'auto', padding: '0.5rem 1rem', fontSize: '0.875rem' }}>
+          {t('upload_pdf')}
+        </Link>
+        <Link to="/profile" className="btn btn-secondary" style={{ width: 'auto', padding: '0.5rem 1rem', fontSize: '0.875rem' }}>
+          {t('profile')}
+        </Link>
+      </Header>
+    <div style={{ flex: 1, maxWidth: '1100px', margin: '0 auto', width: '100%', paddingTop: '2rem', alignSelf: 'stretch' }}>
 
       {error && <div className="alert alert-error" style={{ margin: '0 1rem 1rem' }}>{error}</div>}
 
@@ -296,6 +295,7 @@ export default function ContractGallery() {
           onClose={() => setActiveUpload(null)}
         />
       )}
+    </div>
     </div>
   )
 }

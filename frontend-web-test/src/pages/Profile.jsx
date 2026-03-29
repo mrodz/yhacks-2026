@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { authHeaders, clearToken, getToken } from '../auth'
 import { useLang } from '../LangContext'
+import Header from '../components/Header'
 
 const BACKEND = 'https://api.formfriend.xyz'
 
@@ -71,10 +72,10 @@ export default function Profile() {
     : '?'
 
   return (
-    <div className="page">
+    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: 'var(--gray-50)' }}>
+      <Header />
+      <div className="page" style={{ flex: 1 }}>
       <div className="card">
-        <div className="logo" style={{ marginBottom: '1.5rem' }}>FormFriend</div>
-
         <div className="profile-header">
           <div className="avatar">{initials}</div>
           <div>
@@ -111,6 +112,7 @@ export default function Profile() {
         <button className="btn btn-secondary" onClick={handleLogout} style={{ marginTop: '0.75rem' }}>
           {t('sign_out')}
         </button>
+      </div>
       </div>
     </div>
   )

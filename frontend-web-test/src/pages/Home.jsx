@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import { useLang } from '../LangContext'
+import Header from '../components/Header'
 
 export default function Home() {
   const { t } = useLang()
@@ -20,24 +21,14 @@ export default function Home() {
       </div>
 
       {/* Nav */}
-      <nav style={{
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        padding: '1rem 2rem', background: 'var(--white)',
-        borderBottom: '1px solid var(--gray-200)',
-        position: 'sticky', top: 0, zIndex: 10,
-      }}>
-        <div style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--blue)', letterSpacing: '-0.5px' }}>
-          FormFriend
-        </div>
-        <div style={{ display: 'flex', gap: '0.75rem' }}>
-          <Link to="/login" className="btn btn-outline" style={{ width: 'auto', padding: '0.5rem 1.25rem', fontSize: '0.875rem' }}>
-            {t('sign_in')}
-          </Link>
-          <Link to="/register" className="btn btn-primary" style={{ width: 'auto', padding: '0.5rem 1.25rem', fontSize: '0.875rem' }}>
-            {t('get_started')}
-          </Link>
-        </div>
-      </nav>
+      <Header>
+        <Link to="/login" className="btn btn-outline" style={{ width: 'auto', padding: '0.5rem 1.25rem', fontSize: '0.875rem' }}>
+          {t('sign_in')}
+        </Link>
+        <Link to="/register" className="btn btn-primary" style={{ width: 'auto', padding: '0.5rem 1.25rem', fontSize: '0.875rem' }}>
+          {t('get_started')}
+        </Link>
+      </Header>
 
       <main style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '4rem 1.5rem 5rem' }}>
 
