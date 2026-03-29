@@ -35,10 +35,6 @@ public class UserService {
             throw new DuplicateUserException();
         }
 
-        var emailDomain = request.email().substring(request.email().indexOf("@") + 1);
-        schoolRepository.findByEmailDomain(emailDomain)
-                .orElseThrow(() -> new SchoolNotFoundException(request.email()));
-
         cognitoService.signUp(request.email(), request.name(), request.password(),
                 request.nickname().orElseGet(request::name), request.phoneNumber(), request.preferredUsername().orElseGet(request::name), "/profile");
     }
@@ -50,13 +46,13 @@ public class UserService {
         var signupResult = cognitoService.confirmSignUp(request.email(), request.code());
 
         var emailDomain = request.email().substring(request.email().indexOf("@") + 1);
-        School school = schoolRepository.findByEmailDomain(emailDomain)
-                .orElseThrow(() -> new SchoolNotFoundException(request.email()));
+        School school = schoolRepository.findByEmailDomain(emailDomain).orElse(null);
 
         User user = User.builder()
                 .email(request.email())
                 .sub(signupResult.sub())
                 .name(signupResult.name())
+                .language(request.language())
                 .school(school)
                 .build();
 
@@ -92,6 +88,10 @@ public class UserService {
             user.setEmail(request.email());
         }
 
+        if (request.language() != null) {
+            user.setLanguage(request.language());
+        }
+
         if (request.schoolId() != null) {
             School school = schoolRepository.findById(request.schoolId())
                     .orElseThrow(() -> new SchoolNotFoundException(request.schoolId()));
@@ -116,13 +116,15 @@ public class UserService {
     }
 
     private UserResponse toResponse(User user) {
+        School school = user.getSchool();
         return new UserResponse(
                 user.getId(),
                 user.getName(),
                 user.getEmail(),
-                user.getSchool().getId(),
-                user.getSchool().getCode(),
-                user.getSchool().getName()
+                user.getLanguage(),
+                school != null ? school.getId() : null,
+                school != null ? school.getCode() : null,
+                school != null ? school.getName() : null
         );
     }
 }

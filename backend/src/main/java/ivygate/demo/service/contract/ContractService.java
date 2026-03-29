@@ -3,10 +3,12 @@ package ivygate.demo.service.contract;
 import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -23,7 +25,7 @@ import ivygate.demo.model.User;
 import ivygate.demo.repository.AnalysisResultRepository;
 import ivygate.demo.repository.ContractUploadRepository;
 import ivygate.demo.repository.UserRepository;
-import ivygate.demo.service.ChatGptService;
+import ivygate.demo.service.processor.ChatGptService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import software.amazon.awssdk.core.sync.RequestBody;
@@ -57,7 +59,7 @@ public class ContractService {
     public ContractParseResponse parse(MultipartFile file, UUID sub) throws IOException {
         User user = userRepository.findBySub(sub)
                 .orElseThrow(() -> new EntityNotFoundException("User not found"));
-
+        String language = Optional.ofNullable(user.getLanguage()).orElse("English");
         String filename = file.getOriginalFilename() != null ? file.getOriginalFilename() : "upload.pdf";
         String base = String.format("uploads/%s/%s", sub, UUID.randomUUID());
         String pdfKey = base + ".pdf";
@@ -67,36 +69,92 @@ public class ContractService {
         List<List<WordBlock>> lines = parser.extractLines(file.getInputStream(), pdfKey);
 
         // Build a slim block list (id + text + page) so GPT can reference real element IDs
-        List<Map<String, Object>> slimBlocks = lines.stream()
-                .flatMap(List::stream)
-                .map(w -> {
-                    Map<String, Object> m = new java.util.LinkedHashMap<>();
-                    m.put("id", w.id());
-                    m.put("text", w.text() != null ? w.text() : "");
-                    m.put("page", w.page());
-                    return m;
-                })
-                .collect(Collectors.toList());
-                
+        // List<Map<String, Object>> slimBlocks = lines.stream()
+        //         .flatMap(List::stream)
+        //         .map(w -> {
+        //             Map<String, Object> m = new java.util.LinkedHashMap<>();
+        //             m.put("id", w.id());
+        //             m.put("text", w.text() != null ? w.text() : "");
+        //             m.put("page", w.page());
+        //             return m;
+        //         })
+        //         .collect(Collectors.toList());
+        // StringBuilder csv = new StringBuilder();
+        // csv.append("id,text,page\n"); // header
+        // for (Map<String, Object> row : slimBlocks) {
+        //     String id = String.valueOf(row.get("id"));
+        //     String text = String.valueOf(row.get("text")).replace("\"", "\"\""); // escape quotes
+        //     String page = String.valueOf(row.get("page"));
+        //     csv.append(id)
+        //     .append(",\"").append(text).append("\"") // wrap text in quotes (important)
+        //     .append(",")
+        //     .append(page)
+        //     .append("\n");
+        // }
+        // String blockCsv = csv.toString();
+        List<Map<String, Object>> sentenceBlocks = new ArrayList<>();
+
+        StringBuilder currentSentence = new StringBuilder();
+        String currentId = null;
+        Integer currentPage = null;
+
+        for (var w : lines.stream().flatMap(List::stream).toList()) {
+            String wordText = w.text() != null ? w.text() : "";
+
+            if (currentId == null) {
+                currentId = String.valueOf(w.id());   // first word ID
+                currentPage = w.page();
+            }
+
+            if (currentSentence.length() > 0) {
+                currentSentence.append(" ");
+            }
+            currentSentence.append(wordText);
+
+            // Check if sentence ends
+            if (wordText.endsWith(".")) {
+                Map<String, Object> m = new LinkedHashMap<>();
+                m.put("id", currentId);
+                m.put("text", currentSentence.toString());
+                m.put("page", currentPage);
+
+                sentenceBlocks.add(m);
+
+                // reset
+                currentSentence.setLength(0);
+                currentId = null;
+                currentPage = null;
+            }
+        }
+
+        // handle trailing sentence (no period at end)
+        if (currentSentence.length() > 0 && currentId != null) {
+            Map<String, Object> m = new LinkedHashMap<>();
+            m.put("id", currentId);
+            m.put("text", currentSentence.toString());
+            m.put("page", currentPage);
+
+            sentenceBlocks.add(m);
+        }
+
         StringBuilder csv = new StringBuilder();
+        csv.append("id,text,page\n");
 
-        csv.append("id,text,page\n"); // header
-
-        for (Map<String, Object> row : slimBlocks) {
+        for (Map<String, Object> row : sentenceBlocks) {
             String id = String.valueOf(row.get("id"));
-            String text = String.valueOf(row.get("text")).replace("\"", "\"\""); // escape quotes
+            String text = String.valueOf(row.get("text")).replace("\"", "\"\"");
             String page = String.valueOf(row.get("page"));
 
             csv.append(id)
-            .append(",\"").append(text).append("\"") // wrap text in quotes (important)
-            .append(",")
-            .append(page)
-            .append("\n");
+                    .append(",\"").append(text).append("\"")
+                    .append(",")
+                    .append(page)
+                    .append("\n");
         }
 
         String blockCsv = csv.toString();
 
-        ContractAnalysis analysis = chatGptService.analyzeContract(blockCsv);
+        ContractAnalysis analysis = chatGptService.analyzeContract(blockCsv, language);
 
         byte[] json = objectMapper.writeValueAsBytes(lines);
         s3Client.putObject(

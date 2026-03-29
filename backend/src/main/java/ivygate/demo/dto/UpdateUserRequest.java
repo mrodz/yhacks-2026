@@ -6,5 +6,6 @@ public record UpdateUserRequest(
         String name,
         @Email String email,
         @Email String personalEmail,
+        String language,
         Long schoolId
 ) {}

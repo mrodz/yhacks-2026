@@ -5,5 +5,6 @@ import jakarta.validation.constraints.NotBlank;
 
 public record ConfirmUserRequest(
         @NotBlank @Email String email,
-        @NotBlank String code
+        @NotBlank String code,
+        String language
 ) {}

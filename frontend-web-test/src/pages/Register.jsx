@@ -20,6 +20,7 @@ export default function Register() {
   // const [preferredUsername, setPreferredUsername] = useState('')
   // const [website, setWebsite] = useState('')
   const [personalEmail, setPersonalEmail] = useState('')
+  const [language, setLanguage] = useState('en')
 
   // Step 2 fields
   const [code, setCode] = useState('')
@@ -67,7 +68,7 @@ export default function Register() {
       const res = await fetch(`${BACKEND}/users/confirm`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, code }),
+        body: JSON.stringify({ email, code, language }),
       }).catch(e => {
         console.error(e)
       })
@@ -121,7 +122,6 @@ export default function Register() {
                 onChange={e => setEmail(e.target.value)}
                 required
               />
-              <p className="hint">Must be a valid email</p>
             </div>
             <div className="form-group">
               <label>Password</label>
@@ -153,6 +153,21 @@ export default function Register() {
                 value={personalEmail}
                 onChange={e => setPersonalEmail(e.target.value)}
               />
+            </div>
+            <div className="form-group">
+              <label>Preferred language</label>
+              <select value={language} onChange={e => setLanguage(e.target.value)}>
+                <option value="en">English</option>
+                <option value="es">Spanish</option>
+                <option value="fr">French</option>
+                <option value="zh">Chinese</option>
+                <option value="ar">Arabic</option>
+                <option value="pt">Portuguese</option>
+                <option value="de">German</option>
+                <option value="ja">Japanese</option>
+                <option value="ko">Korean</option>
+                <option value="hi">Hindi</option>
+              </select>
             </div>
             <button className="btn btn-primary" type="submit" disabled={loading} style={{ marginTop: '0.5rem' }}>
               {loading ? 'Sending code…' : 'Continue'}

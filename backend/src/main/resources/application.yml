@@ -1,6 +1,9 @@
 openai:
   api-key: ${OPENAI_API_KEY}
 
+lava:
+  secret-key: ${LAVA_API_KEY}
+
 aws:
   s3:
     bucket: ${S3_BUCKET}

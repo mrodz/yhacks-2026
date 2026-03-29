@@ -46,6 +46,8 @@ public class User {
     private String phoneNumber;
     private String nickname;
 
+    private String language;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "school_id")
     private School school;
