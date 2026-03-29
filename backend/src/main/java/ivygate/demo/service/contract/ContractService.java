@@ -19,6 +19,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import ivygate.demo.dto.ContractAnalysis;
 import ivygate.demo.dto.ContractParseResponse;
 import ivygate.demo.dto.ContractUploadResponse;
+import ivygate.demo.dto.QuestionResponse;
 import ivygate.demo.model.AnalysisResult;
 import ivygate.demo.model.ContractUpload;
 import ivygate.demo.model.User;
@@ -226,6 +227,43 @@ public class ContractService {
         return s3Client.getObjectAsBytes(
                 GetObjectRequest.builder().bucket(bucket).key(upload.getS3Key()).build()
         ).asByteArray();
+    }
+
+    public QuestionResponse askQuestion(Long uploadId, UUID sub, String question) throws IOException {
+        User user = userRepository.findBySub(sub)
+                .orElseThrow(() -> new EntityNotFoundException("User not found"));
+        ContractUpload upload = contractUploadRepository.findByIdAndUser(uploadId, user)
+                .orElseThrow(() -> new EntityNotFoundException("Upload not found"));
+
+        byte[] bytes = s3Client.getObjectAsBytes(
+                GetObjectRequest.builder().bucket(bucket).key(upload.getParsedS3Key()).build()
+        ).asByteArray();
+
+        List<List<WordBlock>> lines = objectMapper.readValue(bytes,
+                objectMapper.getTypeFactory().constructCollectionType(List.class,
+                        objectMapper.getTypeFactory().constructCollectionType(List.class, WordBlock.class)));
+
+        StringBuilder documentText = new StringBuilder();
+        for (List<WordBlock> line : lines) {
+            for (WordBlock word : line) {
+                if (word.text() != null) {
+                    documentText.append(word.text()).append(" ");
+                }
+            }
+            documentText.append("\n");
+        }
+
+        String systemPrompt = String.format("""
+                You are a document assistant. The user will give you the full text of a document \
+                followed by a question about it. Answer the question clearly and concisely based \
+                only on the document content. Respond with JSON in the format: {"answer": "<your answer>"}
+                
+                You must answer in %s
+                """, Optional.ofNullable(user.getLanguage()).orElse("English"));
+
+        String userPrompt = "Document:\n" + documentText + "\n\nQuestion: " + question;
+
+        return chatGptService.complete(systemPrompt, userPrompt, QuestionResponse.class);
     }
 
     public String presignedUrl(Long uploadId, UUID sub) {

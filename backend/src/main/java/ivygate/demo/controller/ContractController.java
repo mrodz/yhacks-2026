@@ -13,11 +13,17 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
+
+import ivygate.demo.dto.QuestionRequest;
+import ivygate.demo.dto.QuestionResponse;
+
+import jakarta.validation.Valid;
 
 import ivygate.demo.dto.ContractAnalysis;
 import ivygate.demo.dto.ContractParseResponse;
@@ -79,6 +85,15 @@ public class ContractController {
             @AuthenticationPrincipal Jwt jwt
     ) throws IOException {
         return contractService.getParsed(id, UUID.fromString(jwt.getSubject()));
+    }
+
+    @PostMapping("/{id}/ask")
+    public QuestionResponse askQuestion(
+            @PathVariable Long id,
+            @Valid @RequestBody QuestionRequest request,
+            @AuthenticationPrincipal Jwt jwt
+    ) throws IOException {
+        return contractService.askQuestion(id, UUID.fromString(jwt.getSubject()), request.question());
     }
 
     @GetMapping("/{id}/analysis")
