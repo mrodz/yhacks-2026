@@ -1,28 +1,25 @@
 import { useState } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
+import { useLang } from '../LangContext'
 
 const BACKEND = 'https://api.formfriend.xyz'
 
 export default function Register() {
   const navigate = useNavigate()
   const location = useLocation()
+  const { t } = useLang()
   const incomplete = location.state?.incomplete
   const [step, setStep] = useState(1)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
-  // Step 1 fields
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  // const [nickname, setNickname] = useState('')
   const [phoneNumber, setPhoneNumber] = useState('')
-  // const [preferredUsername, setPreferredUsername] = useState('')
-  // const [website, setWebsite] = useState('')
   const [personalEmail, setPersonalEmail] = useState('')
   const [language, setLanguage] = useState('en')
 
-  // Step 2 fields
   const [code, setCode] = useState('')
 
   async function handleSignUp(e) {
@@ -30,15 +27,7 @@ export default function Register() {
     setError('')
     setLoading(true)
     try {
-      const body = {
-        name,
-        email,
-        password,
-        // nickname,
-        phoneNumber,
-        // preferredUsername,
-        // website,
-      }
+      const body = { name, email, password, phoneNumber }
       if (personalEmail.trim()) body.personalEmail = personalEmail.trim()
 
       const res = await fetch(`${BACKEND}/users`, {
@@ -69,9 +58,7 @@ export default function Register() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, code, language }),
-      }).catch(e => {
-        console.error(e)
-      })
+      }).catch(e => { console.error(e) })
 
       if (!res.ok) {
         const data = await res.json().catch(() => ({}))
@@ -90,7 +77,7 @@ export default function Register() {
     <div className="page">
       <div className="card">
         <div className="logo">FormFriend</div>
-        <div className="subtitle">Create your account</div>
+        <div className="subtitle">{t('create_account_sub')}</div>
 
         <div className="step-indicator">
           <div className={`step-dot ${step >= 1 ? 'done' : ''}`} />
@@ -103,7 +90,7 @@ export default function Register() {
         {step === 1 ? (
           <form onSubmit={handleSignUp}>
             <div className="form-group">
-              <label>Full name</label>
+              <label>{t('full_name')}</label>
               <input
                 type="text"
                 placeholder="Jane Smith"
@@ -114,7 +101,7 @@ export default function Register() {
               />
             </div>
             <div className="form-group">
-              <label>Email</label>
+              <label>{t('email')}</label>
               <input
                 type="email"
                 placeholder="jsmith@email.edu"
@@ -124,7 +111,7 @@ export default function Register() {
               />
             </div>
             <div className="form-group">
-              <label>Password</label>
+              <label>{t('password')}</label>
               <input
                 type="password"
                 placeholder="Create a password"
@@ -135,7 +122,7 @@ export default function Register() {
               />
             </div>
             <div className="form-group">
-              <label>Phone number</label>
+              <label>{t('phone_number')}</label>
               <input
                 type="tel"
                 placeholder="+12025551234"
@@ -143,10 +130,10 @@ export default function Register() {
                 onChange={e => setPhoneNumber(e.target.value)}
                 required
               />
-              <p className="hint">Include country code, e.g. +1</p>
+              <p className="hint">{t('phone_hint')}</p>
             </div>
             <div className="form-group">
-              <label>Recovery email <span style={{ color: 'var(--gray-400)', fontWeight: 400 }}>(optional)</span></label>
+              <label>{t('recovery_email')} <span style={{ color: 'var(--gray-400)', fontWeight: 400 }}>{t('optional')}</span></label>
               <input
                 type="email"
                 placeholder="jane@gmail.com"
@@ -155,35 +142,35 @@ export default function Register() {
               />
             </div>
             <div className="form-group">
-              <label>Preferred language</label>
+              <label>{t('preferred_language')}</label>
               <select value={language} onChange={e => setLanguage(e.target.value)}>
                 <option value="en">English</option>
-                <option value="es">Spanish</option>
-                <option value="fr">French</option>
-                <option value="zh">Chinese</option>
-                <option value="ar">Arabic</option>
-                <option value="pt">Portuguese</option>
-                <option value="de">German</option>
-                <option value="ja">Japanese</option>
-                <option value="ko">Korean</option>
-                <option value="hi">Hindi</option>
+                <option value="es">Español</option>
+                <option value="fr">Français</option>
+                <option value="zh">中文</option>
+                <option value="ar">العربية</option>
+                <option value="pt">Português</option>
+                <option value="de">Deutsch</option>
+                <option value="ja">日本語</option>
+                <option value="ko">한국어</option>
+                <option value="hi">हिन्दी</option>
               </select>
             </div>
             <button className="btn btn-primary" type="submit" disabled={loading} style={{ marginTop: '0.5rem' }}>
-              {loading ? 'Sending code…' : 'Continue'}
+              {loading ? t('sending_code') : t('continue')}
             </button>
           </form>
         ) : (
           <form onSubmit={handleConfirm}>
             <p style={{ fontSize: '0.9rem', color: 'var(--gray-600)', marginBottom: '1.25rem', textAlign: 'center' }}>
-              We sent a 6-digit code to<br />
+              {t('code_sent_to')}<br />
               <strong style={{ color: 'var(--gray-800)' }}>{email}</strong>
             </p>
             <p style={{ fontSize: '0.9rem', color: 'var(--gray-600)', marginBottom: '1.25rem', textAlign: 'center' }}>
-              The code may take 30 seconds to arrive.<br/>Please be patient. 
+              {t('code_delay')}
             </p>
             <div className="form-group">
-              <label>Verification code</label>
+              <label>{t('verification_code')}</label>
               <input
                 className="code-input"
                 type="text"
@@ -198,18 +185,18 @@ export default function Register() {
               />
             </div>
             <button className="btn btn-primary" type="submit" disabled={loading || code.length < 6}>
-              {loading ? 'Verifying…' : 'Verify & create account'}
+              {loading ? t('verifying') : t('verify_create')}
             </button>
             <div style={{ textAlign: 'center', marginTop: '0.875rem' }}>
               <button type="button" className="text-link" onClick={() => { setStep(1); setError(''); setCode('') }}>
-                ← Back
+                {t('back')}
               </button>
             </div>
           </form>
         )}
 
         <div className="link-row">
-          Already have an account? <Link to="/login">Sign in</Link>
+          {t('have_account')} <Link to="/login">{t('sign_in')}</Link>
         </div>
       </div>
     </div>

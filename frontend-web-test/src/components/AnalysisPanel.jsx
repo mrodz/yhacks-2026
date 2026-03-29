@@ -1,3 +1,5 @@
+import { useLang } from '../LangContext'
+
 const TYPE_ICONS = {
   field:     '✏️',
   signature: '✍️',
@@ -9,8 +11,8 @@ const TYPE_ICONS = {
 }
 
 const CONFIDENCE_COLORS = {
-  high:   { color: 'var(--green)',  bg: 'var(--green-light)' },
-  medium: { color: '#854d0e',       bg: '#fef9c3' },
+  high:   { color: 'var(--green)',    bg: 'var(--green-light)' },
+  medium: { color: '#854d0e',         bg: '#fef9c3' },
   low:    { color: 'var(--gray-400)', bg: 'var(--gray-100)' },
 }
 
@@ -28,7 +30,7 @@ function ConfidenceBadge({ level }) {
   )
 }
 
-function StepCard({ step, index, onStepClick }) {
+function StepCard({ step, onStepClick, pageLabel }) {
   const icon = TYPE_ICONS[step.type] ?? '•'
   return (
     <div
@@ -63,7 +65,7 @@ function StepCard({ step, index, onStepClick }) {
         )}
         {step.pageHint > 0 && (
           <span style={{ fontSize: '0.75rem', color: 'var(--gray-400)', marginTop: '0.25rem', display: 'block' }}>
-            Page {step.pageHint}
+            {pageLabel} {step.pageHint}
           </span>
         )}
       </div>
@@ -72,6 +74,8 @@ function StepCard({ step, index, onStepClick }) {
 }
 
 export default function AnalysisPanel({ analysis, onStepClick }) {
+  const { t } = useLang()
+
   if (!analysis) return (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
       <div className="spinner" />
@@ -110,7 +114,7 @@ export default function AnalysisPanel({ analysis, onStepClick }) {
           <span style={{ fontSize: '1rem' }}>⏱</span>
           <div>
             <span style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--blue)' }}>
-              ~{eta.minutes} min para rellenar
+              {t('eta_min', { n: eta.minutes })}
             </span>
             {eta.basis && (
               <span style={{ fontSize: '0.8125rem', color: 'var(--blue)', opacity: 0.8 }}> · {eta.basis}</span>
@@ -119,10 +123,10 @@ export default function AnalysisPanel({ analysis, onStepClick }) {
         </div>
       )}
 
-      {/* Step 0 — before you begin */}
+      {/* Step 0 */}
       {step0 && (
         <div style={{ marginBottom: '1.25rem' }}>
-          <div className="info-label" style={{ marginBottom: '0.625rem' }}>Antes de empezar</div>
+          <div className="info-label" style={{ marginBottom: '0.625rem' }}>{t('before_begin')}</div>
           <div style={{
             padding: '0.875rem', borderRadius: '8px',
             background: 'var(--gray-50)', border: '1px solid var(--gray-200)',
@@ -152,15 +156,17 @@ export default function AnalysisPanel({ analysis, onStepClick }) {
       {/* Steps */}
       {steps?.length > 0 && (
         <div style={{ marginBottom: '1.25rem' }}>
-          <div className="info-label" style={{ marginBottom: '0.625rem' }}>Pasos ({steps.length})</div>
-          {steps.map((step, i) => <StepCard key={i} step={step} index={i} onStepClick={onStepClick} />)}
+          <div className="info-label" style={{ marginBottom: '0.625rem' }}>{t('steps')} ({steps.length})</div>
+          {steps.map((step, i) => (
+            <StepCard key={i} step={step} onStepClick={onStepClick} pageLabel={t('page')} />
+          ))}
         </div>
       )}
 
       {/* Unanchored notes */}
       {unanchoredNotes?.length > 0 && (
         <div>
-          <div className="info-label" style={{ marginBottom: '0.625rem' }}>Notes</div>
+          <div className="info-label" style={{ marginBottom: '0.625rem' }}>{t('notes')}</div>
           {unanchoredNotes.map((note, i) => (
             <div key={i} style={{
               padding: '0.75rem', borderRadius: '8px', marginBottom: '0.5rem',

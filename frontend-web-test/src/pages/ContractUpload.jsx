@@ -1,12 +1,14 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { authHeaders, getToken } from '../auth'
+import { useLang } from '../LangContext'
 import AnalysisPanel from '../components/AnalysisPanel'
 
 const BACKEND = 'https://api.formfriend.xyz'
 
 export default function ContractUpload() {
   const navigate = useNavigate()
+  const { t } = useLang()
   const [file, setFile] = useState(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -48,19 +50,9 @@ export default function ContractUpload() {
         body,
       })
 
-      if (res.status === 401) {
-        navigate('/login')
-        return
-      }
-      if (res.status === 415) {
-        setError('Server rejected the file — only PDFs are accepted.')
-        return
-      }
-      if (!res.ok) {
-        const text = await res.text()
-        setError(text || `Error ${res.status}`)
-        return
-      }
+      if (res.status === 401) { navigate('/login'); return }
+      if (res.status === 415) { setError('Server rejected the file — only PDFs are accepted.'); return }
+      if (!res.ok) { setError((await res.text()) || `Error ${res.status}`); return }
 
       const data = await res.json()
       setLines(data.lines ?? data)
@@ -76,11 +68,11 @@ export default function ContractUpload() {
     <div className="page" style={{ justifyContent: 'flex-start', paddingTop: '3rem' }}>
       <div className="card" style={{ maxWidth: '640px' }}>
         <div className="logo" style={{ marginBottom: '1.5rem' }}>FormFriend</div>
-        <h2>Parse Contract PDF</h2>
+        <h2>{t('parse_contract')}</h2>
 
         <form onSubmit={handleSubmit}>
           <div className="form-group">
-            <label htmlFor="pdf-upload">PDF file</label>
+            <label htmlFor="pdf-upload">{t('pdf_file')}</label>
             <input
               id="pdf-upload"
               type="file"
@@ -98,7 +90,7 @@ export default function ContractUpload() {
             disabled={!file || loading}
             style={{ marginTop: '0.5rem' }}
           >
-            {loading ? 'Parsing…' : 'Upload & Parse'}
+            {loading ? t('parsing') : t('upload_parse')}
           </button>
         </form>
 
@@ -107,12 +99,12 @@ export default function ContractUpload() {
           onClick={() => navigate('/contracts')}
           style={{ marginTop: '0.75rem' }}
         >
-          My documents
+          {t('my_documents')}
         </button>
 
         {analysis && (
           <div style={{ marginTop: '2rem', borderTop: '1px solid var(--gray-200)', paddingTop: '1.5rem' }}>
-            <div className="info-label" style={{ marginBottom: '1rem' }}>Analysis</div>
+            <div className="info-label" style={{ marginBottom: '1rem' }}>{t('analysis')}</div>
             <AnalysisPanel analysis={analysis} />
           </div>
         )}
@@ -120,7 +112,7 @@ export default function ContractUpload() {
         {lines && (
           <div style={{ marginTop: '1.5rem', borderTop: '1px solid var(--gray-200)', paddingTop: '1.5rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
-              <span className="info-label">Extracted text — {lines.filter(b => b.blockType === 'LINE').length} lines ({lines.length} blocks)</span>
+              <span className="info-label">{t('extracted_text')} — {lines.filter(b => b.blockType === 'LINE').length} lines ({lines.length} blocks)</span>
               <button
                 className="text-link"
                 style={{ fontSize: '0.8125rem' }}
@@ -134,7 +126,7 @@ export default function ContractUpload() {
                   URL.revokeObjectURL(url)
                 }}
               >
-                Download JSON
+                {t('download_json')}
               </button>
             </div>
             <div style={{
@@ -153,9 +145,8 @@ export default function ContractUpload() {
               {lines
                 .filter(b => b.blockType === 'LINE')
                 .sort((a, b) => (a.page ?? 0) - (b.page ?? 0) || (a.boundingBox?.top ?? 0) - (b.boundingBox?.top ?? 0))
-                .map((b, i) => (
-                  <div key={i}>{b.text}</div>
-                ))}
+                .map((b, i) => <div key={i}>{b.text}</div>)
+              }
             </div>
           </div>
         )}

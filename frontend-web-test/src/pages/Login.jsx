@@ -1,12 +1,14 @@
 import { useState } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { setToken } from '../auth'
+import { useLang } from '../LangContext'
 
 const BACKEND = 'https://api.formfriend.xyz'
 
 export default function Login() {
   const navigate = useNavigate()
   const location = useLocation()
+  const { t, refreshLang } = useLang()
   const justRegistered = location.state?.registered
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -28,6 +30,7 @@ export default function Login() {
         throw new Error(data.detail || data.title || 'Login failed')
       }
       setToken(data.accessToken)
+      await refreshLang()
       navigate('/profile')
     } catch (err) {
       setError(err.message)
@@ -40,14 +43,14 @@ export default function Login() {
     <div className="page">
       <div className="card">
         <div className="logo">FormFriend</div>
-        <div className="subtitle">Sign in to your account</div>
+        <div className="subtitle">{t('sign_in_subtitle')}</div>
 
-        {justRegistered && <div className="alert alert-success">Account created! Sign in to continue.</div>}
+        {justRegistered && <div className="alert alert-success">{t('account_created')}</div>}
         {error && <div className="alert alert-error">{error}</div>}
 
         <form onSubmit={handleSubmit}>
           <div className="form-group">
-            <label>Email</label>
+            <label>{t('email')}</label>
             <input
               type="email"
               placeholder="jsmith@email.edu"
@@ -58,7 +61,7 @@ export default function Login() {
             />
           </div>
           <div className="form-group">
-            <label>Password</label>
+            <label>{t('password')}</label>
             <input
               type="password"
               placeholder="Your password"
@@ -68,12 +71,12 @@ export default function Login() {
             />
           </div>
           <button className="btn btn-primary" type="submit" disabled={loading} style={{ marginTop: '0.5rem' }}>
-            {loading ? 'Signing in…' : 'Sign in'}
+            {loading ? t('signing_in') : t('sign_in')}
           </button>
         </form>
 
         <div className="link-row">
-          Don't have an account? <Link to="/register">Create one</Link>
+          {t('no_account')} <Link to="/register">{t('create_one')}</Link>
         </div>
       </div>
     </div>

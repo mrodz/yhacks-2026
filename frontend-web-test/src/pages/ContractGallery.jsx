@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { authHeaders, getToken } from '../auth'
+import { useLang } from '../LangContext'
 import AnalysisPanel from '../components/AnalysisPanel'
 import PdfViewer from '../components/PdfViewer'
 
@@ -34,11 +35,8 @@ function PdfThumbnail({ uploadId }) {
         src={url}
         title="PDF preview"
         style={{
-          width: '794px',
-          height: '1123px',
-          border: 'none',
-          transform: 'scale(0.22)',
-          transformOrigin: 'top left',
+          width: '794px', height: '1123px', border: 'none',
+          transform: 'scale(0.22)', transformOrigin: 'top left',
           pointerEvents: 'none',
         }}
       />
@@ -47,6 +45,7 @@ function PdfThumbnail({ uploadId }) {
 }
 
 function DocumentModal({ uploadId, filename, onClose }) {
+  const { t } = useLang()
   const [parsed, setParsed] = useState(null)
   const [analysis, setAnalysis] = useState(null)
   const [tab, setTab] = useState('analysis')
@@ -96,9 +95,7 @@ function DocumentModal({ uploadId, filename, onClose }) {
           padding: '1rem 1.5rem', flexShrink: 0,
           borderBottom: '1px solid var(--gray-200)',
         }}>
-          <span style={{ fontWeight: 600, color: 'var(--gray-800)', fontSize: '0.9375rem' }}>
-            {filename}
-          </span>
+          <span style={{ fontWeight: 600, color: 'var(--gray-800)', fontSize: '0.9375rem' }}>{filename}</span>
           <button onClick={onClose} style={{
             background: 'none', border: 'none', cursor: 'pointer',
             color: 'var(--gray-400)', fontSize: '1.25rem', lineHeight: 1, padding: '0.25rem',
@@ -111,10 +108,9 @@ function DocumentModal({ uploadId, filename, onClose }) {
           <div style={{ flex: '0 0 55%', borderRight: '1px solid var(--gray-200)', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
             <div style={{
               display: 'flex', alignItems: 'center', gap: '0.5rem',
-              padding: '0.375rem 0.75rem', borderBottom: '1px solid var(--gray-200)',
-              flexShrink: 0,
+              padding: '0.375rem 0.75rem', borderBottom: '1px solid var(--gray-200)', flexShrink: 0,
             }}>
-              <span style={{ fontSize: '0.75rem', color: 'var(--gray-500)', userSelect: 'none' }}>Hover tooltips</span>
+              <span style={{ fontSize: '0.75rem', color: 'var(--gray-500)', userSelect: 'none' }}>{t('hover_tooltips')}</span>
               <button
                 onClick={() => setHoverEnabled(v => !v)}
                 style={{
@@ -131,12 +127,10 @@ function DocumentModal({ uploadId, filename, onClose }) {
                 }} />
               </button>
             </div>
-            {/* <PdfErrorBoundary> */}
-              <PdfViewer uploadId={uploadId} parsed={parsed} steps={analysis?.steps} activeStepNumber={activeStepNumber} hoverEnabled={hoverEnabled} onDismiss={() => setActiveStepNumber(null)} />
-            {/* </PdfErrorBoundary> */}
+            <PdfViewer uploadId={uploadId} parsed={parsed} steps={analysis?.steps} activeStepNumber={activeStepNumber} hoverEnabled={hoverEnabled} onDismiss={() => setActiveStepNumber(null)} />
           </div>
 
-          {/* Right pane with tabs */}
+          {/* Right pane */}
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minWidth: 0 }}>
             {/* Tabs */}
             <div style={{
@@ -145,10 +139,10 @@ function DocumentModal({ uploadId, filename, onClose }) {
               padding: '0 0.5rem',
             }}>
               <button style={tabStyle(tab === 'analysis')} onClick={() => setTab('analysis')}>
-                Analysis
+                {t('analysis')}
               </button>
               <button style={tabStyle(tab === 'json')} onClick={() => setTab('json')}>
-                Raw JSON
+                {t('raw_json')}
               </button>
               {tab === 'json' && parsed && (
                 <button
@@ -162,7 +156,7 @@ function DocumentModal({ uploadId, filename, onClose }) {
                     a.click()
                   }}
                 >
-                  Download
+                  {t('download')}
                 </button>
               )}
             </div>
@@ -201,6 +195,7 @@ function DocumentModal({ uploadId, filename, onClose }) {
 
 export default function ContractGallery() {
   const navigate = useNavigate()
+  const { t } = useLang()
   const [uploads, setUploads] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -234,10 +229,10 @@ export default function ContractGallery() {
         <div style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--blue)' }}>FormFriend</div>
         <div style={{ display: 'flex', gap: '0.75rem' }}>
           <Link to="/contracts/upload" className="btn btn-primary" style={{ width: 'auto', padding: '0.5rem 1rem', fontSize: '0.875rem' }}>
-            + Upload PDF
+            {t('upload_pdf')}
           </Link>
           <Link to="/profile" className="btn btn-secondary" style={{ width: 'auto', padding: '0.5rem 1rem', fontSize: '0.875rem' }}>
-            Profile
+            {t('profile')}
           </Link>
         </div>
       </div>
@@ -246,9 +241,9 @@ export default function ContractGallery() {
 
       {uploads.length === 0 && !error ? (
         <div style={{ textAlign: 'center', color: 'var(--gray-400)', marginTop: '4rem' }}>
-          <p style={{ fontSize: '1rem', marginBottom: '1rem' }}>No documents yet.</p>
+          <p style={{ fontSize: '1rem', marginBottom: '1rem' }}>{t('no_documents')}</p>
           <Link to="/contracts/upload" className="btn btn-primary" style={{ width: 'auto', display: 'inline-block', padding: '0.6rem 1.5rem' }}>
-            Upload your first PDF
+            {t('upload_first')}
           </Link>
         </div>
       ) : (
