@@ -1,5 +1,6 @@
 aws:
-  profile: ivygatedev
+  s3:
+    bucket: ${S3_BUCKET}
   cognito:
     user-pool-id: ${COGNITO_USER_POOL_ID}
     client-id: ${COGNITO_CLIENT_ID}
@@ -47,7 +48,7 @@ spring:
             # Spring Security by default uses a redirect-uri in the format: {baseUrl}/login/oauth2/code/{registrationId}
             # For example: http://localhost:8080/login/oauth2/code/cognito
             # See more: https://docs.spring.io/spring-security/reference/servlet/oauth2/login/core.html#oauth2login-sample-redirect-uri
-            redirect-uri: http://localhost:8080/login/oauth2/code/cognito
+            redirect-uri: https://api.formfriend.xyz/login/oauth2/code/cognito
         provider:
           cognito:
             issuer-uri: ${COGNITO_ISSUER_URI}

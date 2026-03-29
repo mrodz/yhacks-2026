@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { authHeaders, clearToken, getToken } from '../auth'
 
-const BACKEND = 'http://localhost:8080'
+const BACKEND = 'https://api.formfriend.xyz'
 
 export default function Profile() {
   const navigate = useNavigate()
@@ -18,13 +18,25 @@ export default function Profile() {
     fetch(`${BACKEND}/users/me`, {
       headers: authHeaders(),
     })
-      .then(res => {
+      .then(async res => {
         if (res.status === 401) {
           clearToken()
           navigate('/login')
           return null
         }
-        if (!res.ok) throw new Error('Failed to load profile')
+        if (res.status === 404) {
+          clearToken()
+          navigate('/register', { state: { incomplete: true } })
+          return null
+        }
+        if (!res.ok) {
+          let msg = `Error ${res.status}`
+          try {
+            const body = await res.json()
+            msg = body.detail || body.title || msg
+          } catch (_) {}
+          throw new Error(msg)
+        }
         return res.json()
       })
       .then(data => { if (data) setUser(data) })
@@ -101,7 +113,11 @@ export default function Profile() {
           </div>
         </div>
 
-        <button className="btn btn-secondary" onClick={handleLogout} style={{ marginTop: '2rem' }}>
+        <button className="btn btn-primary" onClick={() => navigate('/contracts/upload')} style={{ marginTop: '2rem' }}>
+          Parse a contract
+        </button>
+
+        <button className="btn btn-secondary" onClick={handleLogout} style={{ marginTop: '0.75rem' }}>
           Sign out
         </button>
       </div>

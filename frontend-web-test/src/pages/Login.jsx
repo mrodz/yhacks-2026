@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { setToken } from '../auth'
 
-const BACKEND = 'http://localhost:8080'
+const BACKEND = 'https://api.formfriend.xyz'
 
 export default function Login() {
   const navigate = useNavigate()

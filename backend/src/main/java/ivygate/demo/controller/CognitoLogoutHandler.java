@@ -26,7 +26,7 @@ public class CognitoLogoutHandler extends SimpleUrlLogoutSuccessHandler {
     /**
      * An allowed callback URL.
      */
-    private final String logoutRedirectUrl = "http://localhost:8080/login/oauth2/code/cognito";
+    private final String logoutRedirectUrl = "https://api.formfriend.xyz/login/oauth2/code/cognito";
 
     /**
      * The ID of your User Pool Client.

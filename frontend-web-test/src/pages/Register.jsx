@@ -1,10 +1,12 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useLocation } from 'react-router-dom'
 
-const BACKEND = 'http://localhost:8080'
+const BACKEND = 'https://api.formfriend.xyz'
 
 export default function Register() {
   const navigate = useNavigate()
+  const location = useLocation()
+  const incomplete = location.state?.incomplete
   const [step, setStep] = useState(1)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -77,7 +79,6 @@ export default function Register() {
 
       navigate('/login', { state: { registered: true } })
     } catch (err) {
-      console.error(e);
       setError(err.message)
     } finally {
       setLoading(false)
@@ -95,6 +96,7 @@ export default function Register() {
           <div className={`step-dot ${step === 2 ? 'active' : ''}`} />
         </div>
 
+        {incomplete && <div className="alert alert-error">Your account setup wasn't completed. Please register again.</div>}
         {error && <div className="alert alert-error">{error}</div>}
 
         {step === 1 ? (
