@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { authHeaders, getToken } from '../auth'
+import AnalysisPanel from '../components/AnalysisPanel'
 
 const BACKEND = 'https://api.formfriend.xyz'
 
@@ -10,6 +11,7 @@ export default function ContractUpload() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [lines, setLines] = useState(null)
+  const [analysis, setAnalysis] = useState(null)
 
   if (!getToken()) {
     navigate('/login')
@@ -34,6 +36,7 @@ export default function ContractUpload() {
     setLoading(true)
     setError('')
     setLines(null)
+    setAnalysis(null)
 
     const body = new FormData()
     body.append('file', file)
@@ -60,8 +63,8 @@ export default function ContractUpload() {
       }
 
       const data = await res.json()
-      // data is now { uploadId, filename, lines }
       setLines(data.lines ?? data)
+      setAnalysis(data.analysis ?? null)
     } catch (err) {
       setError(err.message)
     } finally {
@@ -107,8 +110,15 @@ export default function ContractUpload() {
           My documents
         </button>
 
+        {analysis && (
+          <div style={{ marginTop: '2rem', borderTop: '1px solid var(--gray-200)', paddingTop: '1.5rem' }}>
+            <div className="info-label" style={{ marginBottom: '1rem' }}>Analysis</div>
+            <AnalysisPanel analysis={analysis} />
+          </div>
+        )}
+
         {lines && (
-          <div style={{ marginTop: '2rem' }}>
+          <div style={{ marginTop: '1.5rem', borderTop: '1px solid var(--gray-200)', paddingTop: '1.5rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
               <span className="info-label">Extracted text — {lines.filter(b => b.blockType === 'LINE').length} lines ({lines.length} blocks)</span>
               <button

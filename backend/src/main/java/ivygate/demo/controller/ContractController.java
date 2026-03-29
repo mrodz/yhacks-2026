@@ -7,6 +7,7 @@ import java.util.UUID;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -18,6 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
+import ivygate.demo.dto.ContractAnalysis;
 import ivygate.demo.dto.ContractParseResponse;
 import ivygate.demo.dto.ContractUploadResponse;
 import ivygate.demo.service.contract.ContractService;
@@ -51,6 +53,17 @@ public class ContractController {
         return contractService.listUploads(UUID.fromString(jwt.getSubject()));
     }
 
+    @GetMapping("/{id}/download")
+    public ResponseEntity<byte[]> downloadPdf(
+            @PathVariable Long id,
+            @AuthenticationPrincipal Jwt jwt
+    ) {
+        byte[] bytes = contractService.downloadPdf(id, UUID.fromString(jwt.getSubject()));
+        return ResponseEntity.ok()
+                .contentType(MediaType.APPLICATION_PDF)
+                .body(bytes);
+    }
+
     @GetMapping("/{id}/file")
     public Map<String, String> getPresignedUrl(
             @PathVariable Long id,
@@ -66,5 +79,13 @@ public class ContractController {
             @AuthenticationPrincipal Jwt jwt
     ) throws IOException {
         return contractService.getParsed(id, UUID.fromString(jwt.getSubject()));
+    }
+
+    @GetMapping("/{id}/analysis")
+    public ContractAnalysis getAnalysis(
+            @PathVariable Long id,
+            @AuthenticationPrincipal Jwt jwt
+    ) {
+        return contractService.getAnalysis(id, UUID.fromString(jwt.getSubject()));
     }
 }

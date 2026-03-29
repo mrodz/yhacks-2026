@@ -1,6 +1,8 @@
 import { useEffect, useState, useRef } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { authHeaders, getToken } from '../auth'
+import AnalysisPanel from '../components/AnalysisPanel'
+import PdfViewer from '../components/PdfViewer'
 
 const BACKEND = 'https://api.formfriend.xyz'
 
@@ -45,25 +47,32 @@ function PdfThumbnail({ uploadId }) {
 }
 
 function DocumentModal({ uploadId, filename, onClose }) {
-  const [url, setUrl] = useState(null)
   const [parsed, setParsed] = useState(null)
+  const [analysis, setAnalysis] = useState(null)
+  const [tab, setTab] = useState('analysis')
+  const [activeStepNumber, setActiveStepNumber] = useState(null)
+  const [hoverEnabled, setHoverEnabled] = useState(true)
   const overlayRef = useRef(null)
 
   useEffect(() => {
-    fetch(`${BACKEND}/contracts/${uploadId}/file`, { headers: authHeaders() })
-      .then(r => r.json())
-      .then(data => setUrl(data.url))
-      .catch(() => {})
-
     fetch(`${BACKEND}/contracts/${uploadId}/parsed`, { headers: authHeaders() })
-      .then(r => r.json())
-      .then(data => setParsed(data))
-      .catch(() => {})
+      .then(r => r.json()).then(d => setParsed(d)).catch(() => {})
+    fetch(`${BACKEND}/contracts/${uploadId}/analysis`, { headers: authHeaders() })
+      .then(r => r.json()).then(d => setAnalysis(d)).catch(() => {})
   }, [uploadId])
 
   function handleOverlayClick(e) {
     if (e.target === overlayRef.current) onClose()
   }
+
+  const tabStyle = active => ({
+    background: 'none', border: 'none', cursor: 'pointer',
+    padding: '0.5rem 0.875rem',
+    fontSize: '0.8125rem', fontWeight: 600,
+    color: active ? 'var(--blue)' : 'var(--gray-400)',
+    borderBottom: active ? '2px solid var(--blue)' : '2px solid transparent',
+    transition: 'color 0.15s',
+  })
 
   return (
     <div
@@ -79,8 +88,7 @@ function DocumentModal({ uploadId, filename, onClose }) {
       <div style={{
         background: 'var(--white)', borderRadius: '12px',
         width: '100%', maxWidth: '1100px', height: '90vh',
-        display: 'flex', flexDirection: 'column',
-        overflow: 'hidden',
+        display: 'flex', flexDirection: 'column', overflow: 'hidden',
       }}>
         {/* Header */}
         <div style={{
@@ -91,43 +99,61 @@ function DocumentModal({ uploadId, filename, onClose }) {
           <span style={{ fontWeight: 600, color: 'var(--gray-800)', fontSize: '0.9375rem' }}>
             {filename}
           </span>
-          <button
-            onClick={onClose}
-            style={{
-              background: 'none', border: 'none', cursor: 'pointer',
-              color: 'var(--gray-400)', fontSize: '1.25rem', lineHeight: 1,
-              padding: '0.25rem',
-            }}
-          >
-            ✕
-          </button>
+          <button onClick={onClose} style={{
+            background: 'none', border: 'none', cursor: 'pointer',
+            color: 'var(--gray-400)', fontSize: '1.25rem', lineHeight: 1, padding: '0.25rem',
+          }}>✕</button>
         </div>
 
-        {/* Body: PDF left, JSON right */}
+        {/* Body */}
         <div style={{ flex: 1, display: 'flex', overflow: 'hidden', minHeight: 0 }}>
           {/* PDF pane */}
-          <div style={{ flex: '0 0 55%', borderRight: '1px solid var(--gray-200)', overflow: 'hidden' }}>
-            {url
-              ? <iframe src={url} title={filename} style={{ width: '100%', height: '100%', border: 'none' }} />
-              : <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
-                  <div className="spinner" />
-                </div>
-            }
-          </div>
-
-          {/* JSON pane */}
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minWidth: 0 }}>
+          <div style={{ flex: '0 0 55%', borderRight: '1px solid var(--gray-200)', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
             <div style={{
-              padding: '0.625rem 1rem',
-              borderBottom: '1px solid var(--gray-200)',
-              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              display: 'flex', alignItems: 'center', gap: '0.5rem',
+              padding: '0.375rem 0.75rem', borderBottom: '1px solid var(--gray-200)',
               flexShrink: 0,
             }}>
-              <span className="info-label">Parsed data</span>
-              {parsed && (
+              <span style={{ fontSize: '0.75rem', color: 'var(--gray-500)', userSelect: 'none' }}>Hover tooltips</span>
+              <button
+                onClick={() => setHoverEnabled(v => !v)}
+                style={{
+                  width: '32px', height: '18px', borderRadius: '9px', border: 'none',
+                  background: hoverEnabled ? 'var(--blue)' : 'var(--gray-300)',
+                  cursor: 'pointer', position: 'relative', transition: 'background 0.2s', flexShrink: 0,
+                }}
+              >
+                <span style={{
+                  position: 'absolute', top: '2px',
+                  left: hoverEnabled ? '16px' : '2px',
+                  width: '14px', height: '14px', borderRadius: '50%',
+                  background: '#fff', transition: 'left 0.2s',
+                }} />
+              </button>
+            </div>
+            {/* <PdfErrorBoundary> */}
+              <PdfViewer uploadId={uploadId} parsed={parsed} steps={analysis?.steps} activeStepNumber={activeStepNumber} hoverEnabled={hoverEnabled} onDismiss={() => setActiveStepNumber(null)} />
+            {/* </PdfErrorBoundary> */}
+          </div>
+
+          {/* Right pane with tabs */}
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minWidth: 0 }}>
+            {/* Tabs */}
+            <div style={{
+              display: 'flex', alignItems: 'flex-end',
+              borderBottom: '1px solid var(--gray-200)', flexShrink: 0, gap: '0.25rem',
+              padding: '0 0.5rem',
+            }}>
+              <button style={tabStyle(tab === 'analysis')} onClick={() => setTab('analysis')}>
+                Analysis
+              </button>
+              <button style={tabStyle(tab === 'json')} onClick={() => setTab('json')}>
+                Raw JSON
+              </button>
+              {tab === 'json' && parsed && (
                 <button
                   className="text-link"
-                  style={{ fontSize: '0.75rem' }}
+                  style={{ fontSize: '0.75rem', marginLeft: 'auto', marginBottom: '0.5rem' }}
                   onClick={() => {
                     const blob = new Blob([JSON.stringify(parsed, null, 2)], { type: 'application/json' })
                     const a = document.createElement('a')
@@ -136,31 +162,35 @@ function DocumentModal({ uploadId, filename, onClose }) {
                     a.click()
                   }}
                 >
-                  Download JSON
+                  Download
                 </button>
               )}
             </div>
-            <div style={{ flex: 1, overflow: 'auto', padding: '0.75rem 1rem' }}>
-              {parsed
-                ? (
-                  <pre style={{
-                    margin: 0,
-                    fontFamily: 'monospace',
-                    fontSize: '0.75rem',
-                    lineHeight: '1.55',
-                    color: 'var(--gray-800)',
-                    whiteSpace: 'pre-wrap',
-                    wordBreak: 'break-word',
-                  }}>
-                    {JSON.stringify(parsed, null, 2)}
-                  </pre>
-                )
-                : (
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
-                    <div className="spinner" />
-                  </div>
-                )
-              }
+
+            {/* Tab content */}
+            <div style={{ flex: 1, overflow: 'hidden', minHeight: 0 }}>
+              {tab === 'analysis' && (
+                <AnalysisPanel
+                  analysis={analysis}
+                  onStepClick={step => setActiveStepNumber(step.stepNumber)}
+                />
+              )}
+              {tab === 'json' && (
+                <div style={{ height: '100%', overflow: 'auto', padding: '0.75rem 1rem' }}>
+                  {parsed
+                    ? <pre style={{
+                        margin: 0, fontFamily: 'monospace', fontSize: '0.75rem',
+                        lineHeight: '1.55', color: 'var(--gray-800)',
+                        whiteSpace: 'pre-wrap', wordBreak: 'break-word',
+                      }}>
+                        {JSON.stringify(parsed, null, 2)}
+                      </pre>
+                    : <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
+                        <div className="spinner" />
+                      </div>
+                  }
+                </div>
+              )}
             </div>
           </div>
         </div>
