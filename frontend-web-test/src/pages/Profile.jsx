@@ -113,8 +113,8 @@ export default function Profile() {
           </div>
         </div>
 
-        <button className="btn btn-primary" onClick={() => navigate('/contracts/upload')} style={{ marginTop: '2rem' }}>
-          Parse a contract
+        <button className="btn btn-primary" onClick={() => navigate('/contracts')} style={{ marginTop: '2rem' }}>
+          My documents
         </button>
 
         <button className="btn btn-secondary" onClick={handleLogout} style={{ marginTop: '0.75rem' }}>

@@ -3,18 +3,22 @@ package ivygate.demo.service.contract;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
-import java.util.UUID;
+import java.util.Map;
 
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.textract.TextractClient;
 import software.amazon.awssdk.services.textract.model.Block;
+import software.amazon.awssdk.services.textract.model.BlockType;
 import software.amazon.awssdk.services.textract.model.DocumentLocation;
 import software.amazon.awssdk.services.textract.model.GetDocumentTextDetectionRequest;
 import software.amazon.awssdk.services.textract.model.GetDocumentTextDetectionResponse;
 import software.amazon.awssdk.services.textract.model.JobStatus;
+import software.amazon.awssdk.services.textract.model.Relationship;
+import software.amazon.awssdk.services.textract.model.RelationshipType;
 import software.amazon.awssdk.services.textract.model.S3Object;
 import software.amazon.awssdk.services.textract.model.StartDocumentTextDetectionRequest;
 
@@ -33,21 +37,19 @@ public class ContractParser implements AutoCloseable {
     }
 
     /**
-     * Uploads the PDF to S3, runs async Textract text detection, collects all
-     * word blocks across every page, then deletes the temp S3 object.
+     * Uploads the PDF to S3 at the given key, runs async Textract text detection,
+     * and returns words grouped into lines via Textract's LINE→WORD relationships.
+     * The S3 object is NOT deleted — the caller is responsible for its lifecycle.
      *
      * @param inputStream raw PDF bytes
-     * @return all words in document order with normalized bounding boxes
+     * @param s3Key       full S3 key to upload to (caller controls naming)
+     * @return lines of words in reading order
      */
-    public List<WordBlock> extractWords(InputStream inputStream, String sub) throws IOException {
-        String key = String.format("uploads/%s/%s.pdf", sub, UUID.randomUUID());
-
-        System.out.printf("%s - %s%n", key, bucket);
-
+    public List<List<WordBlock>> extractLines(InputStream inputStream, String s3Key) throws IOException {
         s3Client.putObject(
             PutObjectRequest.builder()
                 .bucket(bucket)
-                .key(key)
+                .key(s3Key)
                 .contentType("application/pdf")
                 .build(),
             RequestBody.fromBytes(inputStream.readAllBytes())
@@ -57,20 +59,21 @@ public class ContractParser implements AutoCloseable {
             String jobId = textractClient.startDocumentTextDetection(
                 StartDocumentTextDetectionRequest.builder()
                     .documentLocation(DocumentLocation.builder()
-                        .s3Object(S3Object.builder().bucket(bucket).name(key).build())
+                        .s3Object(S3Object.builder().bucket(bucket).name(s3Key).build())
                         .build())
                     .build()
             ).jobId();
 
-            return collectWords(jobId);
+            return collectLines(jobId);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             throw new IOException("Interrupted while waiting for Textract job", e);
         }
     }
 
-    private List<WordBlock> collectWords(String jobId) throws IOException, InterruptedException {
-        List<WordBlock> words = new ArrayList<>();
+    private List<List<WordBlock>> collectLines(String jobId) throws IOException, InterruptedException {
+        Map<String, Block> blockMap = new HashMap<>();
+        List<Block> lineBlocks = new ArrayList<>();
         String nextToken = null;
 
         while (true) {
@@ -90,16 +93,36 @@ public class ContractParser implements AutoCloseable {
                 continue;
             }
 
-            // SUCCEEDED or PARTIAL_SUCCESS — collect all blocks
             for (Block block : response.blocks()) {
-                words.add(WordBlock.fromBlock(block));
+                blockMap.put(block.id(), block);
+                if (BlockType.LINE.equals(block.blockType())) {
+                    lineBlocks.add(block);
+                }
             }
 
             nextToken = response.nextToken();
             if (nextToken == null) break;
         }
 
-        return words;
+        List<List<WordBlock>> lines = new ArrayList<>();
+        for (Block lineBlock : lineBlocks) {
+            List<WordBlock> wordsInLine = new ArrayList<>();
+            if (lineBlock.hasRelationships()) {
+                for (Relationship rel : lineBlock.relationships()) {
+                    if (RelationshipType.CHILD.equals(rel.type())) {
+                        for (String childId : rel.ids()) {
+                            Block wordBlock = blockMap.get(childId);
+                            if (wordBlock != null && BlockType.WORD.equals(wordBlock.blockType())) {
+                                wordsInLine.add(WordBlock.fromBlock(wordBlock));
+                            }
+                        }
+                    }
+                }
+            }
+            lines.add(wordsInLine);
+        }
+
+        return lines;
     }
 
     @Override

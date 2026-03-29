@@ -188,7 +188,43 @@ No auth required.
 - `CELL` blocks include `rowIndex`, `columnIndex`, `rowSpan`, `columnSpan` for table layout reconstruction.
 - `SELECTION_ELEMENT` blocks carry `selectionStatus`: `SELECTED` or `NOT_SELECTED`.
 
+**Response `200` shape:**
+```json
+{
+  "uploadId": 12,
+  "filename": "lease-agreement.pdf",
+  "lines": [ [ { ...WordBlock }, ... ], ... ]
+}
+```
+
 **Errors:** `400` empty file, `415` not a PDF, `401` unauthenticated.
+
+---
+
+### `GET /contracts` — List Past Uploads
+**Auth required.**
+
+**Response `200`:**
+```json
+[
+  { "id": 12, "filename": "lease-agreement.pdf", "createdAt": "2026-03-28T14:22:00Z" },
+  { "id": 11, "filename": "nda.pdf",              "createdAt": "2026-03-27T09:10:00Z" }
+]
+```
+
+Results are ordered newest first.
+
+---
+
+### `GET /contracts/{id}/file` — Get Presigned PDF URL
+**Auth required.** Only returns a URL for uploads belonging to the current user.
+
+**Response `200`:**
+```json
+{ "url": "https://s3.amazonaws.com/bucket/uploads/...?X-Amz-Signature=..." }
+```
+
+URL is valid for **15 minutes**. Use it directly in an `<iframe>`, `<embed>`, or `WKWebView`. Requesting a URL for an upload that belongs to another user returns `404`.
 
 ---
 
@@ -207,7 +243,9 @@ https://api.formfriend.xyz
 ├── PATCH  /users/{id}                 # update user (auth)
 └── DELETE /users/{id}                 # delete user (auth)
 │
-└── POST   /contracts/parse            # upload PDF, returns word blocks (auth, multipart)
+├── POST   /contracts/parse            # upload PDF → { uploadId, filename, lines } (auth, multipart)
+├── GET    /contracts                  # list past uploads, newest first (auth)
+└── GET    /contracts/{id}/file        # presigned S3 URL for the PDF, 15-min TTL (auth)
 ```
 
 ---

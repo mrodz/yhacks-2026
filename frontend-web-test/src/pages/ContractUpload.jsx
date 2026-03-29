@@ -60,7 +60,8 @@ export default function ContractUpload() {
       }
 
       const data = await res.json()
-      setLines(data)
+      // data is now { uploadId, filename, lines }
+      setLines(data.lines ?? data)
     } catch (err) {
       setError(err.message)
     } finally {
@@ -100,10 +101,10 @@ export default function ContractUpload() {
 
         <button
           className="btn btn-secondary"
-          onClick={() => navigate('/profile')}
+          onClick={() => navigate('/contracts')}
           style={{ marginTop: '0.75rem' }}
         >
-          Back to profile
+          My documents
         </button>
 
         {lines && (

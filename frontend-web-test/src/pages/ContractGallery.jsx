@@ -1,0 +1,276 @@
+import { useEffect, useState, useRef } from 'react'
+import { useNavigate, Link } from 'react-router-dom'
+import { authHeaders, getToken } from '../auth'
+
+const BACKEND = 'https://api.formfriend.xyz'
+
+function PdfThumbnail({ uploadId }) {
+  const [url, setUrl] = useState(null)
+
+  useEffect(() => {
+    fetch(`${BACKEND}/contracts/${uploadId}/file`, { headers: authHeaders() })
+      .then(r => r.json())
+      .then(data => setUrl(data.url))
+      .catch(() => {})
+  }, [uploadId])
+
+  if (!url) {
+    return (
+      <div style={{
+        width: '100%', height: '100%',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        background: 'var(--gray-100)', color: 'var(--gray-400)', fontSize: '0.75rem'
+      }}>
+        Loading…
+      </div>
+    )
+  }
+
+  return (
+    <div style={{ width: '100%', height: '100%', overflow: 'hidden', position: 'relative' }}>
+      <iframe
+        src={url}
+        title="PDF preview"
+        style={{
+          width: '794px',
+          height: '1123px',
+          border: 'none',
+          transform: 'scale(0.22)',
+          transformOrigin: 'top left',
+          pointerEvents: 'none',
+        }}
+      />
+    </div>
+  )
+}
+
+function DocumentModal({ uploadId, filename, onClose }) {
+  const [url, setUrl] = useState(null)
+  const [parsed, setParsed] = useState(null)
+  const overlayRef = useRef(null)
+
+  useEffect(() => {
+    fetch(`${BACKEND}/contracts/${uploadId}/file`, { headers: authHeaders() })
+      .then(r => r.json())
+      .then(data => setUrl(data.url))
+      .catch(() => {})
+
+    fetch(`${BACKEND}/contracts/${uploadId}/parsed`, { headers: authHeaders() })
+      .then(r => r.json())
+      .then(data => setParsed(data))
+      .catch(() => {})
+  }, [uploadId])
+
+  function handleOverlayClick(e) {
+    if (e.target === overlayRef.current) onClose()
+  }
+
+  return (
+    <div
+      ref={overlayRef}
+      onClick={handleOverlayClick}
+      style={{
+        position: 'fixed', inset: 0, zIndex: 100,
+        background: 'rgba(0,0,0,0.6)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        padding: '2rem',
+      }}
+    >
+      <div style={{
+        background: 'var(--white)', borderRadius: '12px',
+        width: '100%', maxWidth: '1100px', height: '90vh',
+        display: 'flex', flexDirection: 'column',
+        overflow: 'hidden',
+      }}>
+        {/* Header */}
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          padding: '1rem 1.5rem', flexShrink: 0,
+          borderBottom: '1px solid var(--gray-200)',
+        }}>
+          <span style={{ fontWeight: 600, color: 'var(--gray-800)', fontSize: '0.9375rem' }}>
+            {filename}
+          </span>
+          <button
+            onClick={onClose}
+            style={{
+              background: 'none', border: 'none', cursor: 'pointer',
+              color: 'var(--gray-400)', fontSize: '1.25rem', lineHeight: 1,
+              padding: '0.25rem',
+            }}
+          >
+            ✕
+          </button>
+        </div>
+
+        {/* Body: PDF left, JSON right */}
+        <div style={{ flex: 1, display: 'flex', overflow: 'hidden', minHeight: 0 }}>
+          {/* PDF pane */}
+          <div style={{ flex: '0 0 55%', borderRight: '1px solid var(--gray-200)', overflow: 'hidden' }}>
+            {url
+              ? <iframe src={url} title={filename} style={{ width: '100%', height: '100%', border: 'none' }} />
+              : <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
+                  <div className="spinner" />
+                </div>
+            }
+          </div>
+
+          {/* JSON pane */}
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minWidth: 0 }}>
+            <div style={{
+              padding: '0.625rem 1rem',
+              borderBottom: '1px solid var(--gray-200)',
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              flexShrink: 0,
+            }}>
+              <span className="info-label">Parsed data</span>
+              {parsed && (
+                <button
+                  className="text-link"
+                  style={{ fontSize: '0.75rem' }}
+                  onClick={() => {
+                    const blob = new Blob([JSON.stringify(parsed, null, 2)], { type: 'application/json' })
+                    const a = document.createElement('a')
+                    a.href = URL.createObjectURL(blob)
+                    a.download = filename.replace(/\.pdf$/i, '.json')
+                    a.click()
+                  }}
+                >
+                  Download JSON
+                </button>
+              )}
+            </div>
+            <div style={{ flex: 1, overflow: 'auto', padding: '0.75rem 1rem' }}>
+              {parsed
+                ? (
+                  <pre style={{
+                    margin: 0,
+                    fontFamily: 'monospace',
+                    fontSize: '0.75rem',
+                    lineHeight: '1.55',
+                    color: 'var(--gray-800)',
+                    whiteSpace: 'pre-wrap',
+                    wordBreak: 'break-word',
+                  }}>
+                    {JSON.stringify(parsed, null, 2)}
+                  </pre>
+                )
+                : (
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
+                    <div className="spinner" />
+                  </div>
+                )
+              }
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export default function ContractGallery() {
+  const navigate = useNavigate()
+  const [uploads, setUploads] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+  const [activeUpload, setActiveUpload] = useState(null)
+
+  useEffect(() => {
+    if (!getToken()) { navigate('/login'); return }
+    fetch(`${BACKEND}/contracts`, { headers: authHeaders() })
+      .then(async res => {
+        if (res.status === 401) { navigate('/login'); return null }
+        if (!res.ok) {
+          const body = await res.json().catch(() => ({}))
+          throw new Error(body.detail || `Error ${res.status}`)
+        }
+        return res.json()
+      })
+      .then(data => { if (data) setUploads(data) })
+      .catch(err => setError(err.message))
+      .finally(() => setLoading(false))
+  }, [navigate])
+
+  if (loading) return (
+    <div className="page"><div className="card" style={{ textAlign: 'center' }}>
+      <div className="spinner" />
+    </div></div>
+  )
+
+  return (
+    <div className="page" style={{ justifyContent: 'flex-start', paddingTop: '3rem', alignItems: 'stretch', maxWidth: '1100px', margin: '0 auto' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem', padding: '0 1rem' }}>
+        <div style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--blue)' }}>FormFriend</div>
+        <div style={{ display: 'flex', gap: '0.75rem' }}>
+          <Link to="/contracts/upload" className="btn btn-primary" style={{ width: 'auto', padding: '0.5rem 1rem', fontSize: '0.875rem' }}>
+            + Upload PDF
+          </Link>
+          <Link to="/profile" className="btn btn-secondary" style={{ width: 'auto', padding: '0.5rem 1rem', fontSize: '0.875rem' }}>
+            Profile
+          </Link>
+        </div>
+      </div>
+
+      {error && <div className="alert alert-error" style={{ margin: '0 1rem 1rem' }}>{error}</div>}
+
+      {uploads.length === 0 && !error ? (
+        <div style={{ textAlign: 'center', color: 'var(--gray-400)', marginTop: '4rem' }}>
+          <p style={{ fontSize: '1rem', marginBottom: '1rem' }}>No documents yet.</p>
+          <Link to="/contracts/upload" className="btn btn-primary" style={{ width: 'auto', display: 'inline-block', padding: '0.6rem 1.5rem' }}>
+            Upload your first PDF
+          </Link>
+        </div>
+      ) : (
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(175px, 1fr))',
+          gap: '1.25rem',
+          padding: '0 1rem',
+        }}>
+          {uploads.map(upload => (
+            <button
+              key={upload.id}
+              onClick={() => setActiveUpload(upload)}
+              style={{
+                background: 'var(--white)',
+                border: '1px solid var(--gray-200)',
+                borderRadius: '10px',
+                cursor: 'pointer',
+                padding: 0,
+                overflow: 'hidden',
+                textAlign: 'left',
+                transition: 'box-shadow 0.15s, transform 0.15s',
+              }}
+              onMouseEnter={e => { e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,0.1)'; e.currentTarget.style.transform = 'translateY(-2px)' }}
+              onMouseLeave={e => { e.currentTarget.style.boxShadow = ''; e.currentTarget.style.transform = '' }}
+            >
+              <div style={{ height: '175px', background: 'var(--gray-50)' }}>
+                <PdfThumbnail uploadId={upload.id} />
+              </div>
+              <div style={{ padding: '0.625rem 0.75rem', borderTop: '1px solid var(--gray-200)' }}>
+                <div style={{
+                  fontSize: '0.8125rem', fontWeight: 600, color: 'var(--gray-800)',
+                  whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                }}>
+                  {upload.filename}
+                </div>
+                <div style={{ fontSize: '0.75rem', color: 'var(--gray-400)', marginTop: '0.2rem' }}>
+                  {new Date(upload.createdAt).toLocaleDateString()}
+                </div>
+              </div>
+            </button>
+          ))}
+        </div>
+      )}
+
+      {activeUpload && (
+        <DocumentModal
+          uploadId={activeUpload.id}
+          filename={activeUpload.filename}
+          onClose={() => setActiveUpload(null)}
+        />
+      )}
+    </div>
+  )
+}
