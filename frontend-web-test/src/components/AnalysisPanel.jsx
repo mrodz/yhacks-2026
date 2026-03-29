@@ -110,7 +110,7 @@ export default function AnalysisPanel({ analysis, onStepClick }) {
           <span style={{ fontSize: '1rem' }}>⏱</span>
           <div>
             <span style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--blue)' }}>
-              ~{eta.minutes} min to complete
+              ~{eta.minutes} min para rellenar
             </span>
             {eta.basis && (
               <span style={{ fontSize: '0.8125rem', color: 'var(--blue)', opacity: 0.8 }}> · {eta.basis}</span>
@@ -122,7 +122,7 @@ export default function AnalysisPanel({ analysis, onStepClick }) {
       {/* Step 0 — before you begin */}
       {step0 && (
         <div style={{ marginBottom: '1.25rem' }}>
-          <div className="info-label" style={{ marginBottom: '0.625rem' }}>Before you begin</div>
+          <div className="info-label" style={{ marginBottom: '0.625rem' }}>Antes de empezar</div>
           <div style={{
             padding: '0.875rem', borderRadius: '8px',
             background: 'var(--gray-50)', border: '1px solid var(--gray-200)',
@@ -152,7 +152,7 @@ export default function AnalysisPanel({ analysis, onStepClick }) {
       {/* Steps */}
       {steps?.length > 0 && (
         <div style={{ marginBottom: '1.25rem' }}>
-          <div className="info-label" style={{ marginBottom: '0.625rem' }}>Steps ({steps.length})</div>
+          <div className="info-label" style={{ marginBottom: '0.625rem' }}>Pasos ({steps.length})</div>
           {steps.map((step, i) => <StepCard key={i} step={step} index={i} onStepClick={onStepClick} />)}
         </div>
       )}

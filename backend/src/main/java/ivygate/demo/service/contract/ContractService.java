@@ -25,7 +25,7 @@ import ivygate.demo.model.User;
 import ivygate.demo.repository.AnalysisResultRepository;
 import ivygate.demo.repository.ContractUploadRepository;
 import ivygate.demo.repository.UserRepository;
-import ivygate.demo.service.processor.ChatGptService;
+import ivygate.demo.service.processor.LavaService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import software.amazon.awssdk.core.sync.RequestBody;
@@ -40,7 +40,7 @@ import software.amazon.awssdk.services.textract.TextractClient;
 @RequiredArgsConstructor
 public class ContractService {
 
-    private final ChatGptService chatGptService;
+    private final LavaService chatGptService;
     private final TextractClient textractClient;
     private final S3Client s3Client;
     private final S3Presigner s3Presigner;
